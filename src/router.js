@@ -8,11 +8,12 @@ export default new Router({
   mode: 'history',
   base: process.env.BASE_URL,
   routes: [
-    {
-      path: '/',
-      name: 'home',
-      component: Home
-    },
+    { path: '/', name: 'index', alias: '/index', component: Home },
+    { path: '/cinema/list', name: 'cinemaList', component: () => import('@/views/cinema/cinemaList.vue') },
+    { path: '/cinema/search', name: 'cinemaSearchPage', component: () => import('@/views/cinema/search.vue') },
+    { path: '/cinema/info', name: 'cinemaInfo', component: () => import('@/views/cinema/cinemaInfo.vue') },
+    { path: '/cinema/seat', name: 'cinemaSeat', component: () => import('@/views/cinema/cinemaSeat.vue') },
+    { path: '/cinema/detail', name: 'cinemaDetail', component: () => import('@/views/cinema/cinemaDetail.vue') },
     {
       path: '/about',
       name: 'about',
