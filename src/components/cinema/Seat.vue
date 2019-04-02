@@ -5,11 +5,13 @@
             <span class="example"><label class="seat seat-Lovers">情侣座</label></span>
             <span class="example"><label class="seat seat-bought">已选</label></span>
         </div>
-        <div class="seat-content">
+        <div class="seat-content" ref="seatContent">
             <div class="trapezoid">{{hallName}}</div>
-            <div class="seat-table">
+            <div class="seat-table" ref="seatTable" :style="tableStyle" @scroll=handleScroll>
+                <div class="left-example" :style="leftExampleHeight">
+                    <span class="example" v-for="i in seat.sortNum" :key="i">{{i}}</span>
+                </div>
                 <a class="s-column" v-for="i in seat.sortNum" :key="i">
-                    <div class="left">{{i}}</div>
                     <a class="seat s-row" :class="{'seat-couple': s.couple, 'seat-empty': s.empty, 'seat-bought':  !s.couple && !s.canSell, 'seat-select': !s.couple && selectSeatNums.indexOf(s.seatNo) > -1,
                         'seat-couple-left': s.coupleIndex % 2 === 0, 'seat-couple-right': s.coupleIndex % 2 === 1,
                         'seat-couple-select': s.couple && selectSeatNums.indexOf(s.seatNo) > -1, 'seat-couple-bought': s.couple && !s.canSell}"
@@ -20,7 +22,6 @@
                     <span>银幕中央</span>
                     <hr :style="rowHeightStyle">
                 </div>
-                <div class="left-example" :style="leftExampleHeight"></div>
                 <div class="best-view" :style="bestStyle"></div>
             </div>
         </div>
@@ -59,6 +60,7 @@ export default {
         return {
             selectSeatNums: [], // 已选中座位 用来控制显示颜色
             selectSeat: [], // 已选中座位对象 用于抛出
+            tableStyle: {}, // 计算整个画布高度
             leftExampleHeight: {}, // 计算左边定位高度
             cinemaCenterStyle: {}, // 屏幕中间位置
             rowHeightStyle: {}, // 座位总高度
@@ -122,9 +124,13 @@ export default {
             let top = bestView.bestMinRow * seatSize + seatTableTop - 3
             let left = bestView.bestMinColumn * seatSize - 3
             let seatNum = this.seat.seatDetailList[1].length // 单行座位最长个数
+            let column = seatNum * seatSize // 座位行总宽度
             let row = this.seat.sortNum.length * seatSize // 座位列总高度
             // 总长度/2 + 座位画布偏左移量25 - 银幕中央宽度60/2 - 一个座位的偏移量5
-            let columnCenter = (seatNum * seatSize) / 2 + seatSize - 60 / 2 - 5 // 中间位置
+            let columnCenter = column / 2 + seatSize - 60 / 2 - 5 // 中间位置
+            this.tableStyle = { // 画布高度
+                height: this.$refs.seatContent.clientHeight - 170 + 'px'
+            }
             this.bestStyle = {
                 width: width + 'px',
                 height: height + 'px',
@@ -137,6 +143,16 @@ export default {
             }
             this.rowHeightStyle = {
                 height: row + 15 + 'px'
+            }
+            this.$nextTick(() => {
+                let tabCenter = this.$refs.seatTable.clientWidth / 2 // 屏幕中间位置
+                let scrollLeft = columnCenter - tabCenter + 30 // 银幕中间位置-银幕中央宽度/2+偏移量
+                this.$refs.seatTable.scrollBy(scrollLeft, 0)
+            })
+        },
+        handleScroll (e) {
+            this.leftExampleHeight = {
+                left: e.target.scrollLeft + 5 + 'px'
             }
         },
         coupleSeat (item) { // 遍历情侣座位置
@@ -181,22 +197,10 @@ export default {
     watch: {
         seat: {
             handler (n, o) {
-                // 左边座位导航
-                if (n.sortNum.length > 0) {
-                    this.$nextTick(() => {
-                        // 根据座位行数重新计算左边阴影高度
-                        setTimeout(() => {
-                            this.leftExampleHeight = {
-                                height: n.sortNum.length * 25 + 5 + 'px',
-                                marginTop: '-4px'
-                            }
-                        }, 500)
-                        if (this.isVip) { // 根据是否vip获取每张票默认金额
-                            this.ticketMoney = n.vipPrice
-                        } else {
-                            this.ticketMoney = n.price
-                        }
-                    })
+                if (this.isVip) { // 根据是否vip获取每张票默认金额
+                    this.ticketMoney = n.vipPrice
+                } else {
+                    this.ticketMoney = n.price
                 }
                 // 最佳观影区
                 if (n.bestViewArea) {
@@ -232,7 +236,7 @@ export default {
         .trapezoid {
             position: fixed;
             transform: translateX(50%);
-            z-index: 1;
+            z-index: 4;
             width: 50%;
             text-align: center;
             height: 25px;
@@ -254,25 +258,14 @@ export default {
         }
         .seat-table {
             overflow: scroll;
-            padding: 45px 0 0 25px;
+            padding: 45px 0 45px 25px;
             padding-top: 70px;
-            display: flex;
-            flex-direction: column;
             text-align: center;
             position: relative;
-            .s-row {}
             .s-column {
                 display: flex;
                 position: relative;
                 z-index: 2;
-                .left {
-                    position: fixed;
-                    width: 15px;
-                    left: 5px;
-                    font-size: 12px;
-                    z-index: 1;
-                    pointer-events: none;
-                }
             }
             .cinema-center {
                 position: absolute;
@@ -293,19 +286,25 @@ export default {
                 }
             }
             .left-example {
-                position: fixed;
-                background: rgba(158, 158, 158, 0.5);
+                position: absolute;
                 z-index: 3;
-                width: 15px;
+                background: rgba(158, 158, 158, 0.5);
+                width: 16px;
                 border-radius: 10px;
                 left: 5px;
                 pointer-events: none;
+                margin-top: -8px;
+                padding: 5px 0;
+                .example {
+                    display: block;
+                    font-size: 12px;
+                    line-height: 25px;
+                }
             }
             .best-view {
                 position: absolute;
                 border: 1px dashed pink;
                 pointer-events: none;
-                // top: 0;
             }
         }
     }
@@ -349,17 +348,24 @@ export default {
         content: '';
         background-image:url('../../assets/img/seat/lovers.png');
     }
+    .seat-couple {
+        padding: 0 0 0 23px;
+    }
     .seat-couple::before {
         content: '';
         background-image:url('../../assets/img/seat/couple.png');
         background-size: auto 100%;
         background-repeat: no-repeat;
-        width: 25px;
-        height: 19px;
+        width: 23px;
+        height: 18px;
+        top: 1px;
     }
     .seat-couple-left::before {
         content: '';
         background-position: left;
+    }
+    .seat-couple-right {
+        padding-right: 4px;
     }
     .seat-couple-right::before {
         content: '';
@@ -383,7 +389,7 @@ export default {
         width: 100%;
         height: 120px;
         padding: 10px;
-        z-index: 1;
+        z-index: 4;
         .seat-select-part {
             display: flex;
             flex-wrap: wrap;
