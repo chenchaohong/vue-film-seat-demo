@@ -1,0 +1,142 @@
+*  {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+html,body{
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-size: 16PX;
+}
+body {
+    -webkit-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+    font-size: 14px;
+    font-family: "PingFangSC-Regular", "Helvetica Neue","Hiragino Sans GB W3","Hiragino Sans GB","Microsoft YaHei","WenQuanYi Micro Hei",sans-serif;
+}
+#app {
+    width: 100%;
+    height: 100%;;
+    position: relative;
+}
+input {
+  -webkit-tap-highlight-color: rgba(0,0,0,0);
+  outline: none;
+  border: none;
+}
+ul,ol,li {
+  list-style:none;
+}
+em,i {
+  font-style: normal;
+}
+pre {
+  white-space: pre-wrap;
+}
+img {
+  border: 0;
+  -webkit-interpolation-mode:bicubic;
+}
+a {
+  text-decoration: none;
+}
+a:active {
+  background-color: none;
+}
+select {
+  outline: none;
+}
+::-webkit-scrollbar {
+  width: 0;
+  opacity: 0;
+}
+::-webkit-scrollbar-track {
+  background: rgba(255,255,0,0);
+  opacity: 0;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255,255,0,0);
+  opacity: 0;
+}
+
+.page {
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    overflow: hidden;
+    position: absolute;
+    background-color: #fff;
+}
+.page-content {
+    z-index: 998;
+    height: 100%;
+    padding-top: 44px;
+    overflow-x: hidden;
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch;
+    position: relative;
+    background-color: #f7f7f7;
+}
+.page-color {
+    background-color: #fff;
+}
+.page-part {
+    padding: 0 15px;
+    background-color: #fff;
+}
+.page-part + .page-part {
+    margin-top: 15px;
+}
+.page-loading {
+    position: fixed;
+    z-index: 999;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    overflow: hidden;
+    background-color: #fff;
+    text-align: center;
+    padding-top: 50%;
+    box-sizing: border-box;
+    > div {
+        display: inline-block;
+    }
+}
+.header {
+    position: fixed;
+    z-index: 1000;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 44px;
+    font-size: 16px;
+    color: #272727;
+    background-color: #fff;
+}
+.header-bottom-border {
+    border-bottom: 1px solid #E8E8E8;
+}
+.page-error {
+    width: 100%;
+    text-align: center;
+    .err-img {
+        height: 122px;
+        width: 150px;
+        background: url(../assets/img/common/error.jpg) no-repeat;
+        background-size: cover;
+        margin: 0 auto;
+    }
+    .err-msg {
+        margin-top: 25px;
+        font-size: 16px;
+        color: #a2a2a2;
+    }
+    .err-detail {
+        margin-top: 10px;
+        font-size: 12px;
+        color: #999;
+    }
+}

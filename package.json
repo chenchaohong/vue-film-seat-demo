@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "serve": "vue-cli-service serve",
+    "serve": "vue-cli-service serve --open",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint"
   },
@@ -16,18 +16,19 @@
     "fastclick": "^1.0.6",
     "js-cookie": "2.2.0",
     "mint-ui": "2.2.13",
-    "vue-awesome-swiper": "^3.1.3",
+    "vue-awesome-swiper": "^3.1.3"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "^3.5.0",
     "@vue/cli-plugin-eslint": "^3.5.0",
     "@vue/cli-service": "^3.5.0",
     "babel-eslint": "^10.0.1",
+    "connect-cgi-mock": "^1.0.5",
     "eslint": "^5.8.0",
     "eslint-plugin-vue": "^5.0.0",
     "fibers": "^3.1.1",
-    "less": "^1.17.2",
-    "less-loader": "^7.1.0",
+    "less": "^3.0.4",
+    "less-loader": "^4.1.0",
     "vue-template-compiler": "^2.5.21"
   }
 }

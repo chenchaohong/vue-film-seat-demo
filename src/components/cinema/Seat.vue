@@ -355,7 +355,7 @@ export default {
         background-size: auto 100%;
         background-repeat: no-repeat;
         width: 25px;
-        height: 20px;
+        height: 19px;
     }
     .seat-couple-left::before {
         content: '';

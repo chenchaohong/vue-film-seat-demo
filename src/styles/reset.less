@@ -1,0 +1,79 @@
+.mint-button {
+    box-shadow: none;
+    border-radius: 45px;
+}
+.mint-button--default {
+    color:rgba(249,83,9,1);
+    border: 1px solid #F95309;
+    background-color: #fff;
+}
+
+.mint-button--primary {
+    color: #fff;
+    border: 1px solid rgba(249,83,9,1);
+    background:rgba(249,83,9,1);
+    box-shadow:0px 5px 8px 0px rgba(249,83,9,0.33);
+}
+.mint-button--green {
+    color: #fff;
+    border: 1px solid rgba(97,192,103,1);
+    background:rgba(97,192,103,1);
+    box-shadow:0px 5px 8px 0px rgba(97,192,103,0.33);
+}
+.mint-button--gray {
+    color:rgba(174,174,174,1);
+    border: 1px solid #AEAEAE;
+    background-color: #fff;
+
+}
+.mint-button--linear {
+    color: #fff;
+    border: 0;
+    background:linear-gradient(3deg,rgba(255,97,71,1) 0%,rgba(253,188,74,1) 100%);
+    box-shadow:0px 9px 24px 0px rgba(181,35,16,0.41);
+}
+
+.mint-switch-input:checked + .mint-switch-core {
+    background-color: @main-color;
+    border-color: @main-color;
+}
+
+.mint-cell + .mint-cell {
+    .mint-cell-wrapper {
+        // border-top: 1px solid #E8E8E8;
+    }
+}
+
+.mint-navbar {
+    border-bottom: @border-bottom;
+    .mint-tab-item {
+        width: 25%;
+        flex: none;
+    }
+}
+.mint-navbar .mint-tab-item.is-selected {
+    position: relative;
+    border-bottom: 0;
+    color: @main-color;
+}
+.mint-navbar .mint-tab-item.is-selected:after{
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: 3px;
+    transform: transLateX(-50%);
+    width: 15px;
+    height: 2px;
+    background-color: @main-color;
+}
+.mint-indicator-mask {
+    z-index: 999;
+}
+.mint-indicator-wrapper {
+    z-index: 1000;
+}
+
+.mint-checkbox-input:checked + .mint-checkbox-core {
+    background-color: @main-color;
+    border-color: @main-color;
+}
