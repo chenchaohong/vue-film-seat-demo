@@ -71,8 +71,13 @@ export default {
         }
     },
     created () {
+        sessionStorage.removeItem('cinemaScroll')
     },
     mounted () {
+    },
+    activated () {
+        let scroll = JSON.parse(sessionStorage.getItem('cinemaScroll') || '{}')
+        this.$refs.seatTable.scrollBy(scroll.left, scroll.top)
     },
     methods: {
         checkSeat (s, e) {
@@ -191,7 +196,14 @@ export default {
             }
         },
         submit () {
-            if (this.selectSeat.length > 0) this.$emit('submit', this.selectSeat)
+            if (this.selectSeat.length > 0) {
+                let cinemaScroll = {
+                    left: this.$refs.seatTable.scrollLeft,
+                    top: this.$refs.seatTable.scrollTop
+                }
+                sessionStorage.setItem('cinemaScroll', JSON.stringify(cinemaScroll))
+                this.$emit('submit', this.selectSeat)
+            }
         }
     },
     watch: {
