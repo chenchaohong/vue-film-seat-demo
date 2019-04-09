@@ -72,7 +72,6 @@ export default {
                         this.tabSelected = this.cinema.filmShow.showTimeList[0] || ''
                         this.setFilm(this.cinema.film[index])
                         this.getCinemaShowList(this.slideFilm.filmId)
-                        console.log('slideChange')
                     },
                     click: () => {
                         if (!this.isSlideToClicked) {
@@ -99,20 +98,32 @@ export default {
     mounted () {
     },
     methods: {
+        selectSlide (id) { // 选中默认的影片id
+            this.cinema.film.forEach((item, index) => {
+                if (id == item.filmId) {
+                    this.$refs.swiper.swiper.activeIndex = index
+                }
+            })
+        },
         setFilm (e) {
             this.slideFilm = e || {}
             this.filmSlideBackground = {
                 backgroundImage: 'url(' + e.filmPic + ')'
             }
-            this.$store.commit('updateSelectFilm', this.slideFilm)
+            this.$store.commit('cinema/updateSelectFilm', this.slideFilm)
         },
         getCinemaFilmShowList () {
             this.$http.post('/film/wocinema/getCinemaFilmShowList.do', {
                 cinemaCollectionId: this.cinema.cinemaDetail.cinemaId
             }).then(res => {
-                this.$store.commit('updateCinemaFilm', res.data.result)
+                this.$store.commit('cinema/updateCinemaFilm', res.data.result)
                 this.getCinemaShowList(res.data.result[0].filmId)
                 this.setFilm(res.data.result[0])
+                // 选中默认的影片id
+                let filmId = this.$route.query.filmId
+                if (filmId) {
+                    this.selectSlide(filmId)
+                }
             }).catch(() => {
                 this.loading = false
             })
@@ -122,7 +133,7 @@ export default {
                 filmId: fid,
                 cinemaCollectionId: this.cinema.cinemaDetail.cinemaId
             }).then(res => {
-                this.$store.commit('updateFilmShow', res.data.result)
+                this.$store.commit('cinema/updateFilmShow', res.data.result)
                 this.loading = false
                 this.tabSelected = res.data.result.showTimeList[0]
             }).catch(() => {
@@ -133,17 +144,38 @@ export default {
             this.$router.push('/vip')
         },
         toSeat (e) {
+            // this.$route.query.couponId
+            this.$store.commit('cinema/updateSelectHall', e)
             this.$router.push('seat')
         },
         // 去影片详情
         toDetail (item) {
-            this.$store.commit('film/setFilm', {
-                filmCollectionId: item.filmId,
-                filmName: item.filmName,
-                disabled: true
+            this.$router.push({
+                path: '/film/detail',
+                query: {
+                    filmId: item.filmId,
+                    filmName: item.filmName,
+                    disabled: true
+                }
             })
-            this.$router.push('/film/detail')
+        },
+        unLockSeat (orderId) {
+            this.$http.post('/film/LockSeat/unLockSeat.do', {
+                orderId: orderId
+            }).then(res => {
+            }).catch(() => {
+            })
         }
+    },
+    beforeRouteEnter (to, from, next) {
+        next(vm => {
+            let orderId = vm.$ls.getItem('orderId')
+            if (orderId) {
+                vm.unLockSeat(orderId)
+                vm.$ls.removeItem('orderId')
+            }
+            next(true)
+        })
     }
 }
 </script>
@@ -193,6 +225,7 @@ export default {
         background: rgba(255, 224, 189, 0.23);
         height: 40px;
         line-height: 40px;
+        font-size: 12px;
         .icon-volume-medium {
             color: #FF9800;
             padding-right: 5px;
@@ -248,6 +281,7 @@ export default {
                 border: 1px solid #FF9800;
                 padding: 2px 0;
                 max-width: 86px;
+                border-radius: 2px;
                 label {
                     padding: 0 1px;
                     margin-right: 1px;
@@ -259,7 +293,8 @@ export default {
         .film-end {
             text-align: right;
             button {
-                height: 30px;
+                height: 25px;
+                width: 50px;
             }
         }
     }

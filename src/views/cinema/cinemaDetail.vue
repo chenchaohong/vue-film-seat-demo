@@ -14,7 +14,7 @@
             </div>
             <div class="cinema-item cinema-discuss">
                 <mt-cell title="影评">
-                    <span class="icon-edit"><label> 写影评</label></span>
+                    <span class="icon-edit" @click="comment"><label> 写影评</label></span>
                 </mt-cell>
             </div>
         </section>
@@ -47,7 +47,7 @@ export default {
             this.$http.post('/film/wocinema/getCinemaFilmShowList.do', {
                 cinemaCollectionId: this.cinema.cinemaDetail.cinemaId
             }).then(res => {
-                this.$store.commit('updateCinemaFilm', res.data.result)
+                this.$store.commit('cinema/updateCinemaFilm', res.data.result)
                 this.getCinemaShowList(res.data.result[0].filmId)
             }).catch(() => {
                 this.loading = false
@@ -58,20 +58,19 @@ export default {
                 filmId: fid,
                 cinemaCollectionId: this.cinema.cinemaDetail.cinemaId
             }).then(res => {
-                this.$store.commit('updateFilmShow', res.data.result)
+                this.$store.commit('cinema/updateFilmShow', res.data.result)
                 this.loading = false
             }).catch(() => {
                 this.loading = false
             })
         },
         comment () {
-            this.$http.post('/film/comment/toComment.do', {
-                targetId: this.cinema.cinemaDetail.cinemaId,
-                content: this.content,
-                stars: this.stars
-            }).then(res => {
-                
-            }).catch(() => {
+            this.$router.push({
+                name: 'filmComment',
+                params: {
+                    name: this.cinema.cinemaDetail.cinemaName,
+                    isDetail: 3
+                }
             })
         }
     }

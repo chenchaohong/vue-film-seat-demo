@@ -67,7 +67,7 @@ export default {
                 cinemaId: e.cinemaId
             }).then(res => {
                 res.data.result.cinemaId = e.cinemaId
-                this.$store.commit('updateCinemaDetail', res.data.result)
+                this.$store.commit('cinema/updateCinemaDetail', res.data.result)
                 this.$ls.setItem('cinemaStoreName', true)
                 this.$router.push('info')
             }).catch(() => {

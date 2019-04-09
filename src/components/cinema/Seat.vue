@@ -6,9 +6,12 @@
             <span class="example"><label class="seat seat-bought">已选</label></span>
         </div>
         <div class="seat-content" ref="seatContent">
-            <div class="trapezoid">{{hallName}}</div>
+            <div class="trapezoid">
+                <span>{{hallName}}</span>
+            </div>
             <div class="seat-table" ref="seatTable" :style="tableStyle" @scroll=handleScroll>
-                <div class="left-example" :style="leftExampleHeight">
+                <!-- @touchstart="touchstart" @touchmove="touchmove" @touchend="touchend"> -->
+                <div class="left-example" :style="leftExampleStyle">
                     <span class="example" v-for="i in seat.sortNum" :key="i">{{i}}</span>
                 </div>
                 <a class="s-column" v-for="i in seat.sortNum" :key="i">
@@ -61,13 +64,18 @@ export default {
             selectSeatNums: [], // 已选中座位 用来控制显示颜色
             selectSeat: [], // 已选中座位对象 用于抛出
             tableStyle: {}, // 计算整个画布高度
-            leftExampleHeight: {}, // 计算左边定位高度
+            leftExampleStyle: {}, // 计算左边定位高度
             cinemaCenterStyle: {}, // 屏幕中间位置
             rowHeightStyle: {}, // 座位总高度
+            showMaxSeatRow: 0, // 显示最多那排座位数
             bestStyle: {}, // 计算最佳影区位置
             ticketMoney: '',
             totalMoney: '',
-            coupleList: [] // 存储情侣座信息
+            coupleList: [], // 存储情侣座信息
+            mgrState: false,
+            mousedownState: false, // 鼠标默认抬起
+            iX: 0, // 鼠标坐标 与 拖拽按钮 间距 x
+            iY: 0 // 鼠标坐标 与 拖拽按钮 间距 y
         }
     },
     created () {
@@ -114,62 +122,89 @@ export default {
             }
         },
         transColumn (r, c) { // 列数转换补0
-            c = c > 9 ? c : '0' + c
+            c = c > 9 ? c : '0' + Number(c)
             return r + '排' + c + '座'
         },
         moneyCount () { // 计算金额
             this.totalMoney = this.selectSeatNums.length > 0 ? this.selectSeatNums.length * this.ticketMoney + ' 元' : ''
         },
         bestSeatCount () { // 最佳影区和屏幕中央计算
+            let scale = 1
             let bestView = this.seat.bestViewArea
             let seatTableTop = 45 // 座位画布距顶端偏移量
-            let seatSize = 25 // 一个座位占的大小  目前一座位加间隔 25
+            let seatSize = 25 * scale // 一个座位占的大小  目前一座位加间隔 25
             let width = ((bestView.bestMaxColumn - bestView.bestMinColumn) + 1) * seatSize
             let height = ((bestView.bestMaxRow - bestView.bestMinRow) + 1) * seatSize
             let top = bestView.bestMinRow * seatSize + seatTableTop - 3
             let left = bestView.bestMinColumn * seatSize - 3
             let seatNum = this.seat.seatDetailList[1].length // 单行座位最长个数
             let column = seatNum * seatSize // 座位行总宽度
-            let row = this.seat.sortNum.length * seatSize // 座位列总高度
+            let rowNum = this.seat.sortNum.length // 总排数
+            let row = rowNum * seatSize // 座位列总高度
             // 总长度/2 + 座位画布偏左移量25 - 银幕中央宽度60/2 - 一个座位的偏移量5
             let columnCenter = column / 2 + seatSize - 60 / 2 - 5 // 中间位置
-            this.tableStyle = { // 画布高度
-                height: this.$refs.seatContent.clientHeight - 170 + 'px'
-            }
-            this.bestStyle = {
-                width: width + 'px',
-                height: height + 'px',
-                top: top + 'px',
-                left: left + 'px'
-            }
-            this.cinemaCenterStyle = {
-                left: columnCenter + 'px',
-                top: '40px'
-            }
-            this.rowHeightStyle = {
-                height: row + 15 + 'px'
-            }
+            let showMaxSeatRowWidth = this.showMaxSeatRow * seatSize
+            let tableLeft = 0
             this.$nextTick(() => {
+                if (document.body.clientWidth - showMaxSeatRowWidth > seatSize) {
+                    tableLeft = document.body.clientWidth - showMaxSeatRowWidth
+                    this.leftExampleStyle = {
+                        position: 'fixed'
+                    }
+                }
+                // 最佳位置 目前设置排列均需大于5才有最佳
+                if (this.showMaxSeatRow > 5 && rowNum > 5) {
+                    this.bestStyle = {
+                        width: `${width}px`,
+                        height: `${height}px`,
+                        top: `${top}px`,
+                        left: `${left}px`
+                    }
+                }
+                this.tableStyle = { // 画布
+                    height: `${this.$refs.seatContent.clientHeight - 170}px`,
+                    left: `${tableLeft / 2.5}px`
+                }
+                this.cinemaCenterStyle = {
+                    left: columnCenter + 'px',
+                    top: '40px'
+                }
+                this.rowHeightStyle = {
+                    height: row + 15 + 'px'
+                }
                 let tabCenter = this.$refs.seatTable.clientWidth / 2 // 屏幕中间位置
                 let scrollLeft = columnCenter - tabCenter + 30 // 银幕中间位置-银幕中央宽度/2+偏移量
                 this.$refs.seatTable.scrollBy(scrollLeft, 0)
             })
         },
         handleScroll (e) {
-            this.leftExampleHeight = {
+            this.leftExampleStyle = {
                 left: e.target.scrollLeft + 5 + 'px'
             }
         },
-        coupleSeat (item) { // 遍历情侣座位置
+        coupleSeat (item) { // 遍历座位
+            let showMaxSeatRows = []
             for (const key in item) {
+                let r = 0
                 item[key].forEach((seat, i) => {
+                    // 座位中文名
                     seat.seatName = this.transColumn(seat.rowId, seat.columnId)
+                    // 情侣座
                     if (seat.couple) {
                         seat.coupleIndex = this.coupleList.length
                         this.coupleList.push(seat)
                     }
+                    if (!seat.empty) {
+                        ++r
+                    }
                 })
+                // 每排显示能看见的座位数
+                showMaxSeatRows.push(r)
             }
+            // 显示最多那排座位数
+            this.showMaxSeatRow = Math.max(...showMaxSeatRows)
+            // 最佳观影区
+            this.bestSeatCount()
         },
         setCoupleSeat (item, type) { // 点击情侣座时获取相关联座位并选中
             let coupleIndex = item.coupleIndex
@@ -204,6 +239,39 @@ export default {
                 sessionStorage.setItem('cinemaScroll', JSON.stringify(cinemaScroll))
                 this.$emit('submit', this.selectSeat)
             }
+        },
+        touchstart (event) {
+            var touch
+            if (event.touches) {
+                touch = event.touches[0]
+            } else {
+                touch = event
+            }
+            // 鼠标点击 面向页面 的 x坐标 y坐标
+            let { clientX, clientY } = touch
+            this.iX = clientX
+            this.iY = clientY
+            // 设置当前 状态为 鼠标按下
+            this.mousedownState = true
+        },
+        touchmove (event) {
+            let touch
+            if (event.touches) {
+                touch = event.touches[0]
+            } else {
+                touch = event
+            }
+            let { clientX, clientY } = touch
+            let [x, y] = [clientX - this.iX, clientY - this.iY]
+            let {
+                style: actionMgrStyle
+            } = this.$refs.seatTable
+            actionMgrStyle.left = `${x}px`
+            actionMgrStyle.top = `${y}px`
+            event.preventDefault()
+        },
+        touchend (event) {
+            this.mousedownState = false
         }
     },
     watch: {
@@ -214,11 +282,7 @@ export default {
                 } else {
                     this.ticketMoney = n.price
                 }
-                // 最佳观影区
-                if (n.bestViewArea) {
-                    this.bestSeatCount()
-                }
-                // 情侣座处理
+                // 座位遍历处理
                 this.coupleSeat(n.seatDetailList)
             },
             deep: true
@@ -252,7 +316,7 @@ export default {
             width: 50%;
             text-align: center;
             height: 25px;
-            line-height: 24px;
+            line-height: 25px;
             font-size: 12px;
         }
         .trapezoid::before {
@@ -263,10 +327,10 @@ export default {
             right: 0;
             bottom: 0;
             z-index: -1;
-            background: #cecdcd;
-            border-bottom-left-radius: 5px;
-            border-bottom-right-radius: 5px;
-            transform: perspective(10px) rotateX(-1deg);
+            border-bottom: 25px solid #cecdcd;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            transform: rotate(180deg);
         }
         .seat-table {
             overflow: scroll;

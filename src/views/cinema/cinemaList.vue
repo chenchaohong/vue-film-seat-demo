@@ -41,7 +41,6 @@
 </template>
 
 <script>
-// import { mapState } from 'vuex'
 export default {
     name: 'cinemaList',
     data () {
@@ -57,6 +56,7 @@ export default {
                 pageSize: '',
                 currentPage: ''
             },
+            film: {},
             areaList: [],
             cinemaList: [],
             searchCinemaList: [],
@@ -71,24 +71,19 @@ export default {
         }
     },
     created () {
-        this.$ls.setItem('cinemaStoreName', false)
         let _location = this.$ls.getItem('location')
+        this.film = this.$route.query
+        this.title = this.film.filmName || '电影院'
+        this.search.filmId = this.film.filmId
         this.search.longitude = _location.longitude
         this.search.latitude = _location.latitude
-        this.search.cityId = _location.cityId
-        // film store
-        let film = this.$store.state.film.film
-        this.search.filmId = film.filmCollectionId
-        this.title = film.filmName || '电影院'
+        this.search.cityId = this.$store.state.area.area.areaId
+        // 清空搜索电影院默认填入输入框的名称
+        this.$ls.setItem('cinemaStoreName', false)
     },
     mounted () {
         this.getArea()
         this.getCinemaList('1')
-    },
-    computed: {
-        // ...mapState({
-        //     cinemaDetail: state => state.cinema.cinemaDetail
-        // })
     },
     methods: {
         toSearch () {
@@ -133,8 +128,11 @@ export default {
                 searchName: e.cinemaId
             }).then(res => {
                 res.data.result.cinemaId = e.cinemaId
-                this.$store.commit('updateCinemaDetail', res.data.result)
-                this.$router.push('info')
+                this.$store.commit('cinema/updateCinemaDetail', res.data.result)
+                this.$router.push({
+                    path: 'info',
+                    query: this.film
+                })
             }).catch(() => {
             })
         }
