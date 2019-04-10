@@ -12,7 +12,7 @@
             <div class="seat-table" ref="seatTable" :style="tableStyle" @scroll=handleScroll>
                 <!-- @touchstart="touchstart" @touchmove="touchmove" @touchend="touchend"> -->
                 <div class="left-example" :style="leftExampleStyle">
-                    <span class="example" v-for="i in seat.sortNum" :key="i">{{i}}</span>
+                    <span class="example" v-for="(i, index) in seat.seatDetailList" :key="index">{{i[0].rowId}}</span>
                 </div>
                 <a class="s-column" v-for="i in seat.sortNum" :key="i">
                     <a class="seat s-row" :class="{'seat-couple': s.couple, 'seat-empty': s.empty, 'seat-bought':  !s.couple && !s.canSell, 'seat-select': !s.couple && selectSeatNums.indexOf(s.seatNo) > -1,
@@ -146,7 +146,7 @@ export default {
             let showMaxSeatRowWidth = this.showMaxSeatRow * seatSize
             let tableLeft = 0
             this.$nextTick(() => {
-                if (document.body.clientWidth - showMaxSeatRowWidth > seatSize) {
+                if (document.body.clientWidth - showMaxSeatRowWidth > seatSize * 2) {
                     tableLeft = document.body.clientWidth - showMaxSeatRowWidth
                     this.leftExampleStyle = {
                         position: 'fixed'
@@ -200,6 +200,7 @@ export default {
                 })
                 // 每排显示能看见的座位数
                 showMaxSeatRows.push(r)
+                console.log(showMaxSeatRows)
             }
             // 显示最多那排座位数
             this.showMaxSeatRow = Math.max(...showMaxSeatRows)
@@ -374,6 +375,7 @@ export default {
                 .example {
                     display: block;
                     font-size: 12px;
+                    height: 25px;
                     line-height: 25px;
                 }
             }
