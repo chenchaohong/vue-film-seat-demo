@@ -166,11 +166,11 @@ export default {
                     left: `${tableLeft / 2.5}px`
                 }
                 this.cinemaCenterStyle = {
-                    left: columnCenter + 'px',
+                    left: `${columnCenter}px`,
                     top: '40px'
                 }
                 this.rowHeightStyle = {
-                    height: row + 15 + 'px'
+                    height: `${row + 15}px`
                 }
                 let tabCenter = this.$refs.seatTable.clientWidth / 2 // 屏幕中间位置
                 let scrollLeft = columnCenter - tabCenter + 30 // 银幕中间位置-银幕中央宽度/2+偏移量
@@ -179,7 +179,7 @@ export default {
         },
         handleScroll (e) {
             this.leftExampleStyle = {
-                left: e.target.scrollLeft + 5 + 'px'
+                left: `${e.target.scrollLeft + 5}px`
             }
         },
         coupleSeat (item) { // 遍历座位
@@ -200,7 +200,6 @@ export default {
                 })
                 // 每排显示能看见的座位数
                 showMaxSeatRows.push(r)
-                console.log(showMaxSeatRows)
             }
             // 显示最多那排座位数
             this.showMaxSeatRow = Math.max(...showMaxSeatRows)
