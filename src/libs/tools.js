@@ -77,7 +77,8 @@ export const off = (function () {
  * @description 日期格式化 dateFormat(date, fmt)
  */
 export const dateFormat = (date, fmt = 'yyyy-MM-dd') => {
-    if (date) date = (date instanceof Date) ? date : new Date(date)
+    // 处理苹果兼容性
+    if (date) date = (date instanceof Date) ? date : new Date(date.replace(/.[0-9]*$/, '').replace(/-/g, "/"))
     else return ''
     const o = {
         'M+': date.getMonth() + 1,

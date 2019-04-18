@@ -5,12 +5,11 @@
             <span class="example"><label class="seat seat-Lovers">情侣座</label></span>
             <span class="example"><label class="seat seat-bought">已选</label></span>
         </div>
-        <div class="seat-content" ref="seatContent">
-            <div class="trapezoid">
-                <span>{{hallName}}</span>
-            </div>
-            <div class="seat-table" ref="seatTable" :style="tableStyle" @scroll=handleScroll>
-                <!-- @touchstart="touchstart" @touchmove="touchmove" @touchend="touchend"> -->
+        <div class="trapezoid">
+            <span>{{hallName}}</span>
+        </div>
+        <div class="seat-content" ref="seatContent" :style="seatContentStyle">
+            <div class="seat-table" ref="seatTable" :style="tableStyle" @scroll=handleScroll @touchstart="touchstart" @touchend="touchend">
                 <div class="left-example" :style="leftExampleStyle">
                     <span class="example" v-for="(i, index) in seat.seatDetailList" :key="index">{{i[0].rowId}}</span>
                 </div>
@@ -45,6 +44,7 @@
 </template>
 
 <script>
+import { numberFormat } from '@/libs/tools'
 export default {
     name: 'seat',
     props: {
@@ -63,6 +63,7 @@ export default {
         return {
             selectSeatNums: [], // 已选中座位 用来控制显示颜色
             selectSeat: [], // 已选中座位对象 用于抛出
+            seatContentStyle: {},
             tableStyle: {}, // 计算整个画布高度
             leftExampleStyle: {}, // 计算左边定位高度
             cinemaCenterStyle: {}, // 屏幕中间位置
@@ -126,7 +127,7 @@ export default {
             return r + '排' + c + '座'
         },
         moneyCount () { // 计算金额
-            this.totalMoney = this.selectSeatNums.length > 0 ? this.selectSeatNums.length * this.ticketMoney + ' 元' : ''
+            this.totalMoney = this.selectSeatNums.length > 0 ? numberFormat(this.selectSeatNums.length * this.ticketMoney, 2) + ' 元' : ''
         },
         bestSeatCount () { // 最佳影区和屏幕中央计算
             let scale = 1
@@ -148,8 +149,11 @@ export default {
             this.$nextTick(() => {
                 if (document.body.clientWidth - showMaxSeatRowWidth > seatSize * 2) {
                     tableLeft = document.body.clientWidth - showMaxSeatRowWidth
-                    this.leftExampleStyle = {
-                        position: 'fixed'
+                    // this.leftExampleStyle = {
+                    //     position: 'fixed'
+                    // }
+                    this.seatContentStyle = {
+                        overflow: 'auto'
                     }
                 }
                 // 最佳位置 目前设置排列均需大于5才有最佳
@@ -163,7 +167,7 @@ export default {
                 }
                 this.tableStyle = { // 画布
                     height: `${this.$refs.seatContent.clientHeight - 170}px`,
-                    left: `${tableLeft / 2.5}px`
+                    left: `${tableLeft / 3}px`
                 }
                 this.cinemaCenterStyle = {
                     left: `${columnCenter}px`,
@@ -178,8 +182,19 @@ export default {
             })
         },
         handleScroll (e) {
+            if (this.mousedownState) {
+                setTimeout(() => {
+                    this.handleScroll(e)
+                }, 0)
+                return
+            }
             this.leftExampleStyle = {
-                left: `${e.target.scrollLeft + 5}px`
+                left: `${e.target.scrollLeft + 5}px`,
+                transition: 'all .5s'
+            }
+            this.tableStyle = {
+                height: `${this.$refs.seatContent.clientHeight - 170}px`,
+                left: 0
             }
         },
         coupleSeat (item) { // 遍历座位
@@ -306,35 +321,35 @@ export default {
             width: 70px;
         }
     }
+    .trapezoid {
+        position: fixed;
+        transform: translateX(50%);
+        z-index: 4;
+        width: 50%;
+        text-align: center;
+        height: 25px;
+        line-height: 25px;
+        font-size: 12px;
+    }
+    .trapezoid::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: -1;
+        border-bottom: 25px solid #cecdcd;
+        border-left: 5px solid transparent;
+        border-right: 5px solid transparent;
+        transform: rotate(180deg);
+    }
     .seat-content {
         background: #eee;
         height: 100%;
-        .trapezoid {
-            position: fixed;
-            transform: translateX(50%);
-            z-index: 4;
-            width: 50%;
-            text-align: center;
-            height: 25px;
-            line-height: 25px;
-            font-size: 12px;
-        }
-        .trapezoid::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            z-index: -1;
-            border-bottom: 25px solid #cecdcd;
-            border-left: 5px solid transparent;
-            border-right: 5px solid transparent;
-            transform: rotate(180deg);
-        }
         .seat-table {
             overflow: scroll;
-            padding: 45px 0 45px 25px;
+            padding: 45px 25px 45px 25px;
             padding-top: 70px;
             text-align: center;
             position: relative;
