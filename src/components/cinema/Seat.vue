@@ -86,49 +86,10 @@ export default {
     },
     activated () {
         let scroll = JSON.parse(sessionStorage.getItem('cinemaScroll') || '{}')
-        this.$refs.seatTable.scrollBy(scroll.left, scroll.top)
+        this.$refs.seatTable.scrollTop = scroll.top
+        this.$refs.seatTable.scrollLeft = scroll.left
     },
     methods: {
-        checkSeat (s, e) {
-            if (s.canSell) {
-                let i = this.selectSeatNums.indexOf(s.seatNo)
-                if (i > -1) { // 已选中再次点击取消选中
-                    this.cancelSeat(s)
-                } else {
-                    if (this.selectSeatNums.length >= this.maxTicket) {
-                        this.$toast('一次最多购买4张票')
-                        return
-                    }
-                    if (s.couple) { // 情侣座特殊处理
-                        if (this.selectSeatNums.length >= this.maxTicket - 1) {
-                            this.$toast('一次最多购买4张票，情侣座为2张票')
-                            return
-                        }
-                        this.setCoupleSeat(s, 'add')
-                    } else {
-                        this.selectSeat.push(s)
-                        this.selectSeatNums.push(s.seatNo)
-                    }
-                }
-                this.moneyCount()
-            }
-        },
-        cancelSeat (s) { // 点击选中的票取消改选中
-            if (s.couple) {
-                this.setCoupleSeat(s, 'del')
-            } else {
-                let i = this.selectSeatNums.indexOf(s.seatNo)
-                this.selectSeat.splice(i, 1)
-                this.selectSeatNums.splice(i, 1)
-            }
-        },
-        transColumn (r, c) { // 列数转换补0
-            c = c > 9 ? c : '0' + Number(c)
-            return r + '排' + c + '座'
-        },
-        moneyCount () { // 计算金额
-            this.totalMoney = this.selectSeatNums.length > 0 ? numberFormat(this.selectSeatNums.length * this.ticketMoney, 2) + ' 元' : ''
-        },
         bestSeatCount () { // 最佳影区和屏幕中央计算
             let scale = 1
             let bestView = this.seat.bestViewArea
@@ -178,7 +139,7 @@ export default {
                 }
                 let tabCenter = this.$refs.seatTable.clientWidth / 2 // 屏幕中间位置
                 let scrollLeft = columnCenter - tabCenter + 30 // 银幕中间位置-银幕中央宽度/2+偏移量
-                this.$refs.seatTable.scrollBy(scrollLeft, 0)
+                this.$refs.seatTable.scrollLeft = scrollLeft
             })
         },
         handleScroll (e) {
@@ -221,6 +182,46 @@ export default {
             // 最佳观影区
             this.bestSeatCount()
         },
+        checkSeat (s, e) {
+            if (s.canSell) {
+                let i = this.selectSeatNums.indexOf(s.seatNo)
+                if (i > -1) { // 已选中再次点击取消选中
+                    this.cancelSeat(s)
+                } else {
+                    if (this.selectSeatNums.length >= this.maxTicket) {
+                        this.$toast('一次最多购买4张票')
+                        return
+                    }
+                    if (s.couple) { // 情侣座特殊处理
+                        if (this.selectSeatNums.length >= this.maxTicket - 1) {
+                            this.$toast('一次最多购买4张票，情侣座为2张票')
+                            return
+                        }
+                        this.setCoupleSeat(s, 'add')
+                    } else {
+                        this.selectSeat.push(s)
+                        this.selectSeatNums.push(s.seatNo)
+                    }
+                }
+                this.moneyCount()
+            }
+        },
+        cancelSeat (s) { // 点击选中的票取消改选中
+            if (s.couple) {
+                this.setCoupleSeat(s, 'del')
+            } else {
+                let i = this.selectSeatNums.indexOf(s.seatNo)
+                this.selectSeat.splice(i, 1)
+                this.selectSeatNums.splice(i, 1)
+            }
+        },
+        transColumn (r, c) { // 列数转换补0
+            c = c > 9 ? c : '0' + Number(c)
+            return r + '排' + c + '座'
+        },
+        moneyCount () { // 计算金额
+            this.totalMoney = this.selectSeatNums.length > 0 ? numberFormat(this.selectSeatNums.length * this.ticketMoney, 2) + ' 元' : ''
+        },
         setCoupleSeat (item, type) { // 点击情侣座时获取相关联座位并选中
             let coupleIndex = item.coupleIndex
             let leftIndex = 0
@@ -245,8 +246,31 @@ export default {
                 this.selectSeatNums.splice(i, 2)
             }
         },
+        cutSeatFlag () {
+            // 判断同排是否相邻座位留空
+            let seat = {}
+            this.selectSeat.forEach(item => {
+                if (!seat[item.rowId]) seat[item.rowId] = []
+                seat[item.rowId].push(item.columnId)
+            })
+            for (const key in seat) {
+                let temp = seat[key].sort()
+                if (temp.length > 1) {
+                    for (var i = 1; i < temp.length; i++) {
+                        if (Number(temp[0]) + i != Number(temp[i])) {
+                            return true
+                        }
+                    }
+                }
+            }
+            return false
+        },
         submit () {
             if (this.selectSeat.length > 0) {
+                if (this.cutSeatFlag()) {
+                    this.$toast('相邻座位不能留空')
+                    return
+                }
                 let cinemaScroll = {
                     left: this.$refs.seatTable.scrollLeft,
                     top: this.$refs.seatTable.scrollTop
