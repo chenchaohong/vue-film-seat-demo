@@ -2,7 +2,7 @@
     <div class="seat-part">
         <div class="seat-top">
             <span class="example"><label class="seat">可选</label></span>
-            <span class="example"><label class="seat seat-Lovers">情侣座</label></span>
+            <span class="example" v-if="coupleList.length > 0"><label class="seat seat-Lovers">情侣座</label></span>
             <span class="example"><label class="seat seat-bought">已选</label></span>
         </div>
         <div class="trapezoid">
@@ -61,8 +61,11 @@ export default {
     },
     data () {
         return {
+            unselectedSeat: {}, // 可以选择的座位
+            coupleList: [], // 存储情侣座信息
             selectSeatNums: [], // 已选中座位 用来控制显示颜色
             selectSeat: [], // 已选中座位对象 用于抛出
+            checkSelectSeatGrou: {}, // 根据行列区分组选中座位
             seatContentStyle: {},
             tableStyle: {}, // 计算整个画布高度
             leftExampleStyle: {}, // 计算左边定位高度
@@ -72,8 +75,6 @@ export default {
             bestStyle: {}, // 计算最佳影区位置
             ticketMoney: '',
             totalMoney: '',
-            coupleList: [], // 存储情侣座信息
-            mgrState: false,
             mousedownState: false, // 鼠标默认抬起
             iX: 0, // 鼠标坐标 与 拖拽按钮 间距 x
             iY: 0 // 鼠标坐标 与 拖拽按钮 间距 y
@@ -110,9 +111,6 @@ export default {
             this.$nextTick(() => {
                 if (document.body.clientWidth - showMaxSeatRowWidth > seatSize * 2) {
                     tableLeft = document.body.clientWidth - showMaxSeatRowWidth
-                    // this.leftExampleStyle = {
-                    //     position: 'fixed'
-                    // }
                     this.seatContentStyle = {
                         overflow: 'auto'
                     }
@@ -171,6 +169,10 @@ export default {
                         this.coupleList.push(seat)
                     }
                     if (!seat.empty) {
+                        if (seat.canSell) {
+                            if (!this.unselectedSeat[seat.rowId]) this.unselectedSeat[seat.rowId] = []
+                            this.unselectedSeat[seat.rowId].push(String(Number(seat.columnId)))
+                        }
                         ++r
                     }
                 })
@@ -246,24 +248,96 @@ export default {
                 this.selectSeatNums.splice(i, 2)
             }
         },
-        cutSeatFlag () {
-            // 判断同排是否相邻座位留空
-            let seat = {}
-            this.selectSeat.forEach(item => {
-                if (!seat[item.rowId]) seat[item.rowId] = []
-                seat[item.rowId].push(item.columnId)
+        // 将连续座位分组
+        grouSingSeat (column, unseat) {
+            let grou = {}
+            column.forEach(c => {
+                let seats = unseat[c]
+                if (seats.length > 1) {
+                    var index = 0
+                    grou[c] = []
+                    grou[c][index] = [seats[0]]
+                    for (var i = 1; i < seats.length + 1; i++) {
+                        if (seats[i]) {
+                            if (Math.abs(seats[i] - (seats[i - 1])) != 1) {
+                                grou[c][++index] = [seats[i]]
+                            } else {
+                                grou[c][index].push(seats[i])
+                            }
+                        }
+                    }
+                }
             })
-            for (const key in seat) {
-                let temp = seat[key].sort()
-                if (temp.length > 1) {
-                    for (var i = 1; i < temp.length; i++) {
-                        if (Number(temp[0]) + i != Number(temp[i])) {
-                            return true
+            return grou
+        },
+        checkSingSeat (news, olds) {
+            let flag = 0
+            for (const key in news) {
+                let temp = news[key]
+                for (var i = 0; i < temp.length; i++) {
+                    if (temp[i].length < 2) {
+                        let defcz = false
+                        olds[key].filter((o, index) => {
+                            // 原数据已是留单个座位
+                            if (o.indexOf(temp[i][0]) > -1 && o.length == 1) {
+                                defcz = true
+                            }
+                        })
+                        if (!defcz) {
+                            if (i != 0 && i !== temp.length - 1) {
+                                ++flag
+                            } else {
+                                let s1 = String(Number(temp[i][0]) + 1)
+                                let s2 = String(Number(temp[i][0]) - 1)
+                                // 首或尾留单
+                                let checkSelectSeatGrou = this.checkSelectSeatGrou[key].sort()
+                                if (checkSelectSeatGrou.indexOf(s1) > -1 || checkSelectSeatGrou.indexOf(s2) > -1) {
+                                    let t = i == 0 ? i + 1 : i - 1
+                                    let num = 0
+                                    // 选后临近两个相邻空位需要大于2
+                                    num = Number(temp[i][0]) < Number(temp[t][0]) ? Math.abs(Number(temp[i][0]) - Number(Math.min.apply(Math, temp[t]))) : Math.abs(Number(temp[i][0]) - Number(Math.max.apply(Math, temp[t])))
+                                    if (num < 3) {
+                                        ++flag
+                                    } else {
+                                        // 选择的座位是中间有空一个位置
+                                        for (var s = 0; s < checkSelectSeatGrou.length; s++) {
+                                            if (checkSelectSeatGrou[s + 1] && (Number(checkSelectSeatGrou[s + 1]) - Number(checkSelectSeatGrou[s]) != 1)) {
+                                                if (checkSelectSeatGrou[s] == Number(temp[i][0]) + 1 || checkSelectSeatGrou[s] == Number(temp[i][0]) - 1) {
+                                                    ++flag
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
             }
-            return false
+            if (flag > 0) {
+                return true
+            }
+        },
+        cutSeatFlag () {
+            // 能选择的座位
+            let seat = JSON.parse(JSON.stringify(this.unselectedSeat))
+            // 选中的排数
+            let selectColumn = []
+            this.checkSelectSeatGrou = []
+            this.selectSeat.filter(item => {
+                if (!this.checkSelectSeatGrou[item.rowId]) this.checkSelectSeatGrou[item.rowId] = []
+                this.checkSelectSeatGrou[item.rowId].push(String(Number(item.columnId)))
+                let row = seat[item.rowId]
+                if (row.indexOf(String(Number(item.columnId))) > -1) {
+                    // 将选中的位置从没选择的位置中过滤掉
+                    row.splice(row.indexOf(String(Number(item.columnId))), 1)
+                    selectColumn.push(item.rowId)
+                }
+            })
+            let grouNews = this.grouSingSeat(Array.from(new Set(selectColumn)), seat)
+            let grouOlds = this.grouSingSeat(Array.from(new Set(selectColumn)), this.unselectedSeat)
+            // 座位是否留单
+            return this.checkSingSeat(grouNews, grouOlds)
         },
         submit () {
             if (this.selectSeat.length > 0) {
@@ -517,7 +591,7 @@ export default {
                 display: inline-block;
                 font-size: 12px;
                 height: 35px;
-                width: 22%;
+                width: 21.5%;
                 border: 1px solid #E8E8E8;
                 border-radius: 4px;
                 margin: 10px 0 0 10px;
@@ -535,7 +609,7 @@ export default {
                 content: 'x';
                 position:absolute;
                 color: #9E9E9E;
-                right: 4px;
+                right: 3px;
                 top: 0;
                 height: 14px;
                 transform: translateY(50%);
